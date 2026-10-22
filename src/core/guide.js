@@ -243,12 +243,15 @@
   /* The static pages link to the US store. A visitor sent from another store's site
      (ca.gpen.com links here with ?store=ca) gets that store instead, same rule as ?lang=:
      ?store= > saved choice > US, and a ?store= link sticks for the next guides they open.
-     To add a store: one entry here. base replaces https://www.gpen.com on every store
+     To add a store: one entry here. base replaces https://gpen.com on every store
      link; register replaces /pages/register; langPrefix puts a language folder in front
-     of the path (Canada's French pages live under /fr). */
+     of the path (Canada's French pages live under /fr); slash ends paths the way that
+     store's own links do (saves a redirect). Where a store sells something under another
+     address, the link carries data-<store>-href (the US-style address of that store's
+     product), or data-<store>-href="" where that store doesn't sell it: the card is hidden. */
   var STORES = {
-    us: { base: 'https://www.gpen.com', register: '/pages/register' },
-    ca: { base: 'https://ca.gpen.com', register: '/register/', langPrefix: { fr: '/fr' } }
+    us: { base: 'https://gpen.com', register: '/pages/register' },
+    ca: { base: 'https://ca.gpen.com', register: '/register/', langPrefix: { fr: '/fr' }, slash: true }
   };
   var STORE_LINK = /^https?:\/\/(?:www\.)?gpen\.com(?=[\/?#]|$)/i;
   var REGISTER = /^\/pages\/register\/?(?=[?#]|$)/;
@@ -269,8 +272,11 @@
       var us = a.getAttribute('data-us-href') || a.getAttribute('href');
       if (!STORE_LINK.test(us)) return;
       a.setAttribute('data-us-href', us);
-      var path = us.replace(STORE_LINK, '') || '/';
+      var alt = a.getAttribute('data-' + store + '-href');
+      a.style.display = alt === '' ? 'none' : '';
+      var path = (alt || us).replace(STORE_LINK, '') || '/';
       if (REGISTER.test(path)) path = path.replace(REGISTER, cfg.register);
+      if (cfg.slash) path = path.replace(/^([^?#]*[^\/?#])(?=[?#]|$)/, '$1/');
       a.setAttribute('href', cfg.base + prefix + path);
     });
   }

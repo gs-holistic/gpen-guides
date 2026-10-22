@@ -24,6 +24,6 @@ Each guide is also published in Spanish, German, Italian, French, Brazilian Port
 ## Optional
 
 - [All guides as plain text](https://help.gpen.com/llms-full.txt): every guide's steps, specs and FAQ
-- [G Pen store](https://www.gpen.com/): products, warranty and registration
+- [G Pen store](https://gpen.com/): products, warranty and registration
 
 Support: +1 833-691-3224, help@gpen.com

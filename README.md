@@ -66,11 +66,21 @@ get a guide link, so keep its address and the `/<slug>/`, `/<lang>/<slug>/` path
 New guides must use the slugs the stores expect: elite-ii, micro-plus, hyer, connect, roam.
 
 **Store region (`?store=`).** The static pages link to the US store. `?store=ca` (sent by
-ca.gpen.com) switches every `https://www.gpen.com/...` link to the same path on
+ca.gpen.com) switches every `https://gpen.com/...` link to the same path on
 ca.gpen.com, Register to `/register/`, and adds `/fr` when the page is in French. Same rule
 as `?lang=`: `?store=` > saved choice > US, and it sticks. Stores are one config object,
 `STORES` in `src/core/guide.js`; add an entry for another region. Phone and email are the
 same for every store.
+
+Both stores are WooCommerce (since October 2026): product links are
+`https://gpen.com/products/<product slug>`, collections `https://gpen.com/collections/<category slug>`.
+The Canada store doesn't sell everything under the same slug: an Upgrades card in
+`src/accessories.json` takes `"ca": "<Canada slug>"`, or `"ca": null` where Canada doesn't
+sell it (the card is hidden there); a `shop_button` in `build.py` takes a third item,
+`{"ca": "<US-style URL>"}`. Each store's catalog is open JSON, so check a slug with
+`https://gpen.com/wp-json/wc/store/v1/products?slug=<slug>` (or `ca.gpen.com/...`).
+Card pictures live in `src/upgrades/` (copied from the old Shopify CDN, which will go away);
+the build makes a 320px WebP of each.
 
 **Which G Pen do I have? (`/identify/`).** Every published guide's photo with three
 "look for" cues, grouped by what goes in the device, plus tips for look-alikes (Dash II vs
@@ -222,7 +232,7 @@ isn't built, listed or linked; to publish one, set `hidden` to `False` and run `
 Product copy, specs, SKU/UPC and manual PDFs come from the brand asset portal
 (<https://assets.gpen.com>, whose `assets/data/*.js` files hold the full data) and
 the print manuals on the Grenco drive (`GPEN/Packaging/<product>/Manual/`). The
-Register button goes to `www.gpen.com/pages/register`, or to the Canada store's when the
+Register button goes to `gpen.com/pages/register`, or to the Canada store's when the
 visitor arrived with `?store=ca` (see "Store region" above); there is no time-zone or IP guess.
 
 The Grinder has no print manual; its guide was written from its one-sheet, box

@@ -67,7 +67,8 @@ PRODUCTS = {
         "card_image": "hero.png",           # local file in src/
         "images": {},
         "text": {},
-        "shop_button": ("Shop the Hydout collection", "https://www.gpen.com/collections/g-pen-hydout-collection"),
+        "shop_button": ("Shop the Hydout collection", "https://gpen.com/collections/g-pen-hydout-collection",
+                        {"ca": "https://gpen.com/collections/hydout-collection"}),
     },
     "dash-ii": {
         "template": "dash-ii.template.html",
@@ -86,7 +87,7 @@ PRODUCTS = {
         "card_image": "510-original-card.png",
         "images": {},
         "text": {},
-        "shop_button": ("Shop the Retro collection", "https://www.gpen.com/collections/g-pen-510-original-retro-collection"),
+        "shop_button": ("Shop the Retro collection", "https://gpen.com/collections/g-pen-510-original-retro-collection"),
     },
     "micro-ii": {
         "template": "micro-ii.template.html",
@@ -109,7 +110,7 @@ PRODUCTS = {
             "UPG_MICRO_PLUS": "melt-upgrade-micro-plus.png",
         },
         "text": {},
-        "shop_button": ("Shop all vaporizers", "https://www.gpen.com/collections/vaporizers"),
+        "shop_button": ("Shop all vaporizers", "https://gpen.com/collections/vaporizers"),
     },
 
     "dash-plus": {
@@ -129,7 +130,8 @@ PRODUCTS = {
         "card_image": "grinder-card.png",
         "images": {},
         "text": {},
-        "shop_button": ("Shop dry herb vaporizers", "https://www.gpen.com/collections/dry-herb-vaporizers"),
+        "shop_button": ("Shop dry herb vaporizers", "https://gpen.com/collections/dry-herb-vaporizers",
+                        {"ca": "https://gpen.com/collections/vaporizers/dry-herb-vaporizers"}),
         "register": False,  # no warranty, so nothing to register (Tim, 2026-09-30)
     },
     "elite-ii": {
@@ -206,7 +208,7 @@ def _card_href(s: str, spec: dict) -> tuple[str, str]:
     """Return (href, extra_attrs) for a product card."""
     if spec.get("template"):
         return f"{s}/", ""
-    return spec.get("href", f"https://www.gpen.com/products/{s}"), \
+    return spec.get("href", f"https://gpen.com/products/{s}"), \
            'target="_blank" rel="noopener noreferrer"'
 
 
@@ -250,7 +252,8 @@ def card_srcset(slug: str, spec: dict, root_prefix: str, sizes: str) -> tuple[st
     return f' srcset="{", ".join(parts)}" sizes="{sizes}"', f' width="{W}" height="{H}"'
 
 
-ACCESSORIES_URL = "https://www.gpen.com/collections/accessories"
+ACCESSORIES_URL = "https://gpen.com/collections/accessories"
+STORE_PRODUCT = "https://gpen.com/products/"   # + the WooCommerce product slug
 ARROW_SVG = ('<svg viewBox="0 0 20 20" aria-hidden="true">'
              '<path d="M7 4.5 15.5 10 7 15.5Z" fill="currentColor"/></svg>')
 
@@ -280,15 +283,18 @@ def accessories_html(slug: str) -> str:
         out.append('    <div class="acc-grid">')
         for i, c in enumerate(cards, start=1):
             img = c["image"]
-            if img.startswith("http"):  # store CDN: ask for a card-sized rendition
-                img += ("&" if "?" in img else "?") + "width=320"   # drawn ~104px wide, x3 screens
-            href = c.get("url") or f"https://www.gpen.com/products/{c['handle']}"
+            if not img.startswith("{{"):   # a picture under src/ (src/upgrades/): see ACCIMG in build_product
+                img = "{{ACCIMG:%s}}" % img
+            href = c.get("url") or f"https://gpen.com/products/{c['handle']}"
+            # "ca": the Canada store's own handle for it, or null where that store doesn't sell
+            # it (guide.js swaps the link, or hides the card, for ?store=ca visitors)
+            alt = (f' data-ca-href="{STORE_PRODUCT}{c["ca"]}"' if c["ca"] else ' data-ca-href=""') if "ca" in c else ""
             # alt attribute needs full escaping; the visible text is set via data-i18n's
             # textContent (not innerHTML), so it must stay UNescaped or entities like
             # &amp;/&#x27; would show up literally once a translation is applied.
             name, note, price = c["name"], c["note"], c["price"]
             out.append(
-                f'      <a class="acc-card" href="{href}" target="_blank" rel="noopener noreferrer">\n'
+                f'      <a class="acc-card" href="{href}"{alt} target="_blank" rel="noopener noreferrer">\n'
                 f'        <span class="acc-img"><img src="{img}" alt="" loading="lazy"></span>\n'
                 '        <div class="acc-card-body">\n'
                 f'          <span class="acc-card-name" data-i18n="acc{i}_name">{keep_together(name)}</span>\n'
@@ -299,10 +305,11 @@ def accessories_html(slug: str) -> str:
                 '      </a>'
             )
         out.append('    </div>')
-    label, url = PRODUCTS[slug].get("shop_button") or ("Shop all accessories" if cards else "Shop accessories", ACCESSORIES_URL)
+    label, url, *other = PRODUCTS[slug].get("shop_button") or ("Shop all accessories" if cards else "Shop accessories", ACCESSORIES_URL)
+    alt = "".join(f' data-{store}-href="{u}"' for store, u in (other[0] if other else {}).items())
     cls = "upgrade-btn alt" if cards else "upgrade-btn"
     out.append('    <div class="upgrade-cta">')
-    out.append(f'      <a class="{cls}" href="{url}" target="_blank" rel="noopener noreferrer" data-i18n="upgrade_btn">')
+    out.append(f'      <a class="{cls}" href="{url}"{alt} target="_blank" rel="noopener noreferrer" data-i18n="upgrade_btn">')
     out.append(f'        {label}\n        {ARROW_SVG}')
     out.append('      </a>')
     out.append('    </div>')
@@ -730,14 +737,14 @@ def page_meta(html: str) -> tuple[str, str]:
 # Search + AI discoverability: schema.org JSON-LD, llms.txt
 # ─────────────────────────────────────────────────────────────────────────────────────
 ORG = {
-    "@type": "Organization", "@id": "https://www.gpen.com/#org", "name": "G Pen",
-    "url": "https://www.gpen.com/",
+    "@type": "Organization", "@id": "https://gpen.com/#org", "name": "G Pen",
+    "url": "https://gpen.com/",
     "logo": f"{BASE_URL}core/apple-touch-icon.png",
     "contactPoint": {"@type": "ContactPoint", "contactType": "customer support",
                      "telephone": "+1-833-691-3224", "email": "help@gpen.com"},
 }
 WEBSITE = {"@type": "WebSite", "@id": f"{BASE_URL}#site", "url": BASE_URL,
-           "name": "G Pen Product Guides", "publisher": {"@id": "https://www.gpen.com/#org"},
+           "name": "G Pen Product Guides", "publisher": {"@id": "https://gpen.com/#org"},
            "inLanguage": ["en", "es", "de", "it", "fr", "pt-BR", "sv", "pl", "da"]}
 
 
@@ -777,7 +784,7 @@ def guide_jsonld(slug: str, spec: dict, content: dict, title: str, desc: str,
         {"@type": "WebPage", "@id": url, "url": url, "name": title, "description": desc,
          "inLanguage": lang, "isPartOf": {"@id": f"{BASE_URL}#site"},
          "breadcrumb": {"@id": f"{url}#breadcrumb"}, "mainEntity": {"@id": f"{url}#howto"},
-         "publisher": {"@id": "https://www.gpen.com/#org"}},
+         "publisher": {"@id": "https://gpen.com/#org"}},
         howto,
         {"@type": "BreadcrumbList", "@id": f"{url}#breadcrumb", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": home_name, "item": home},
@@ -850,7 +857,7 @@ def build_llms_files() -> None:
     lines += ["", f"- [Which G Pen do I have?]({BASE_URL}identify/): photos and look-for cues to identify a G Pen device",
               "", "## Optional", "",
               f"- [All guides as plain text]({BASE_URL}llms-full.txt): every guide's steps, specs and FAQ",
-              "- [G Pen store](https://www.gpen.com/): products, warranty and registration",
+              "- [G Pen store](https://gpen.com/): products, warranty and registration",
               "", "Support: +1 833-691-3224, help@gpen.com", ""]
     (ROOT / "llms.txt").write_text("\n".join(lines))
     (ROOT / "llms-full.txt").write_text("\n".join(full))
@@ -1075,6 +1082,12 @@ def _build_product(slug, spec, template, content, body, out_dir, img_dir) -> Non
         shutil.copy(src, img_dir / filename)
         hosted = hosted.replace("{{%s}}" % key, f"img/{filename}")
         offline = offline.replace("{{%s}}" % key, data_uri(src))
+
+    # Upgrades card pictures (src/upgrades/), drawn ~104px wide: one small WebP each
+    for ref in sorted(set(re.findall(r"\{\{ACCIMG:([^}]+)\}\}", hosted))):
+        name, _, _ = webp_variant(SRC / ref, 320, img_dir)
+        hosted = hosted.replace("{{ACCIMG:%s}}" % ref, f"img/{name}")
+        offline = offline.replace("{{ACCIMG:%s}}" % ref, data_uri(img_dir / name))
 
     # Images referenced from content/<slug>.json by filename (relative to src/, e.g. a
     # guide image under src/images/) — published flat into <product>/img/, each with WebP
