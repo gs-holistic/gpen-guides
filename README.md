@@ -14,7 +14,7 @@ Settings → Pages → Source: **Deploy from a branch**, branch `main`, folder `
 `.nojekyll` is already in the repo so Pages serves every file untouched.
 
 Live at <https://help.gpen.com/> (custom domain, since 2026-09-30). The old
-<https://timgrenco.github.io/gpen-guides/> address redirects there.
+<https://gs-holistic.github.io/gpen-guides/> address redirects there.
 
 | Guide | Path |
 |---|---|
@@ -37,7 +37,7 @@ hosted `/<product>/` page.
 ship on packaging a path can never move. The site is live at **help.gpen.com**; how it
 is wired, for reference:
 
-1. DNS (GoDaddy, gpen.com): CNAME record `help` → `timgrenco.github.io`.
+1. DNS (GoDaddy, gpen.com): CNAME record `help` → `gs-holistic.github.io`.
 2. `BASE_URL = "https://help.gpen.com/"` in `build.py` (canonical links, share previews,
    sitemap and the offline copies all hang off it) and the `CNAME` file at the repo root.
 3. Settings → Pages → Custom domain `help.gpen.com`, "Enforce HTTPS" on.
